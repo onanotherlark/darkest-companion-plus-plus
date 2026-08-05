@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provisioning Ledger — Darkest Dungeon Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f0b09;
+    --ink-2:#181210;
+    --ink-3:#201810;
+    --parchment:#ddccab;
+    --parchment-dim:#a9987a;
+    --gold:#c69a45;
+    --gold-bright:#e8bc63;
+    --blood:#7e1f1f;
+    --blood-bright:#b23a3a;
+    --madness:#6f7a2e;
+    --madness-bright:#9aab3d;
+    --good:#7fae6a;
+    --bad:#b2504a;
+    --neutral:#a9987a;
+    --line: rgba(221,204,171,0.18);
+    --shadow: rgba(0,0,0,0.6);
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(198,154,69,0.10), transparent 60%),
+      var(--ink);
+    color:var(--parchment);
+    font-family:'EB Garamond', serif;
+    font-size:18px;
+    line-height:1.5;
+  }
+
+  ::selection{ background:var(--gold); color:var(--ink); }
+
+  .wrap{
+    max-width:820px;
+    margin:0 auto;
+    padding:2.5rem 1.25rem 5rem;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:1.75rem;
+    position:relative;
+  }
+
+  .flame{
+    font-size:1.6rem;
+    display:inline-block;
+    filter: drop-shadow(0 0 8px rgba(232,188,99,0.55));
+    animation: flicker 3.2s infinite ease-in-out;
+  }
+  @keyframes flicker{
+    0%,100%{ transform: scale(1) rotate(0deg); opacity:1; }
+    35%{ transform: scale(1.06,0.94) rotate(-2deg); opacity:0.9; }
+    60%{ transform: scale(0.95,1.05) rotate(2deg); opacity:1; }
+  }
+
+  h1{
+    font-family:'Cinzel Decorative', serif;
+    font-weight:900;
+    font-size:1.9rem;
+    letter-spacing:0.03em;
+    color:var(--gold-bright);
+    margin:0.6rem 0 0.35rem;
+    text-shadow:0 2px 0 rgba(0,0,0,0.6);
+  }
+
+  .subtitle{
+    font-family:'IM Fell English', serif;
+    font-style:italic;
+    color:var(--parchment-dim);
+    font-size:1.05rem;
+    margin:0;
+  }
+
+  .attribution{
+    text-align:center;
+    font-size:0.85rem;
+    color:var(--parchment-dim);
+    margin-top:0.6rem;
+    font-style:italic;
+  }
+  .attribution a{ color:var(--gold-bright); text-decoration:underline; text-underline-offset:2px;}
+
+  .divider{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    margin:1.75rem 0 1.5rem;
+    color:var(--parchment-dim);
+  }
+  .divider::before,.divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:linear-gradient(90deg, transparent, var(--line), transparent);
+  }
+  .divider span{
+    font-family:'Cinzel Decorative', serif;
+    font-size:0.7rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+  }
+
+  /* Location picker */
+  .locations{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:0.6rem;
+  }
+  @media (max-width:520px){
+    .locations{ grid-template-columns:repeat(2, 1fr); }
+  }
+
+  .loc-btn{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:4px;
+    color:var(--parchment-dim);
+    padding:0.85rem 0.5rem 0.7rem;
+    font-family:'IM Fell English', serif;
+    font-size:1rem;
+    cursor:pointer;
+    text-align:center;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    position:relative;
+  }
+  .loc-btn .glyph{
+    display:block;
+    font-size:1.4rem;
+    margin-bottom:0.3rem;
+  }
+  .loc-btn .dlc-tag{
+    display:block;
+    font-family:'EB Garamond', serif;
+    font-size:0.68rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin-top:0.2rem;
+    opacity:0.75;
+  }
+  .loc-btn:hover{ border-color:var(--gold); color:var(--parchment); }
+  .loc-btn.active{
+    color:var(--ink);
+    background:var(--gold);
+    border-color:var(--gold-bright);
+    font-weight:600;
+  }
+  .loc-btn.active.dlc-blood{ background:var(--blood-bright); border-color:var(--blood-bright); color:#f3e4e4; }
+  .loc-btn.active.dlc-madness{ background:var(--madness-bright); border-color:var(--madness-bright); color:#101208; }
+
+  /* Tab picker */
+  .tabs{
+    display:flex;
+    gap:0.5rem;
+    margin-top:0.5rem;
+    border-bottom:1px solid var(--line);
+  }
+  .tab-btn{
+    flex:1;
+    background:transparent;
+    border:none;
+    border-bottom:3px solid transparent;
+    color:var(--parchment-dim);
+    padding:0.7rem 0.5rem;
+    font-family:'Cinzel Decorative', serif;
+    font-size:0.85rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab-btn:hover{ color:var(--parchment); }
+  .tab-btn.active{ color:var(--gold-bright); border-color:var(--gold-bright); }
+
+  /* Length picker */
+  .lengths{
+    display:flex;
+    gap:0.5rem;
+    margin-top:0.5rem;
+  }
+  .len-btn{
+    flex:1;
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:4px;
+    color:var(--parchment-dim);
+    padding:0.55rem 0.5rem;
+    font-family:'EB Garamond', serif;
+    font-size:0.95rem;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .len-btn:hover{ border-color:var(--gold); color:var(--parchment); }
+  .len-btn.active{
+    border-color:var(--gold-bright);
+    color:var(--gold-bright);
+    background:rgba(198,154,69,0.08);
+  }
+
+  .note{
+    font-size:0.9rem;
+    color:var(--parchment-dim);
+    font-style:italic;
+    margin-top:0.9rem;
+    border-left:2px solid var(--line);
+    padding-left:0.75rem;
+  }
+
+  /* Curio sort toggle */
+  .sort-row{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    margin-top:0.5rem;
+  }
+  .sort-label{
+    font-family:'Cinzel Decorative', serif;
+    font-size:0.7rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    margin-right:0.25rem;
+  }
+  .sort-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:4px;
+    color:var(--parchment-dim);
+    padding:0.4rem 0.85rem;
+    font-family:'EB Garamond', serif;
+    font-size:0.9rem;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .sort-btn:hover{ border-color:var(--gold); color:var(--parchment); }
+  .sort-btn.active{
+    border-color:var(--gold-bright);
+    color:var(--gold-bright);
+    background:rgba(198,154,69,0.08);
+  }
+
+  /* Curio search */
+  .search-row{
+    margin-top:0.5rem;
+  }
+  .search-input{
+    width:100%;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:5px;
+    color:var(--parchment);
+    font-family:'EB Garamond', serif;
+    font-size:0.95rem;
+    padding:0.5rem 0.75rem;
+  }
+  .search-input::placeholder{ color:var(--parchment-dim); }
+  .search-input:focus{ outline:none; border-color:var(--gold-bright); }
+
+  /* Curio tag filter */
+  .filter-row{
+    margin-top:0.9rem;
+    border:1px solid var(--line);
+    border-radius:5px;
+  }
+  .filter-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    background:none;
+    border:none;
+    padding:0.6rem 0.75rem;
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+  }
+  .filter-head:hover .sort-label{ color:var(--parchment); }
+  .filter-count{
+    font-family:'EB Garamond', serif;
+    text-transform:none;
+    letter-spacing:normal;
+    color:var(--gold-bright);
+    margin-left:0.4rem;
+    font-size:0.85rem;
+  }
+  .filter-chevron{
+    color:var(--parchment-dim);
+    font-size:0.8rem;
+    transition:transform 0.15s ease;
+  }
+  .filter-row.open .filter-chevron{ transform:rotate(180deg); }
+  .filter-tags-wrap{
+    display:none;
+    padding:0 0.75rem 0.75rem;
+  }
+  .filter-row.open .filter-tags-wrap{ display:block; }
+  .filter-clear-row{
+    margin-top:0.6rem;
+    text-align:right;
+  }
+  .filter-clear{
+    background:none;
+    border:none;
+    color:var(--parchment-dim);
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    font-size:0.8rem;
+    cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  .filter-clear:hover{ color:var(--gold-bright); }
+  .filter-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.4rem;
+    margin-top:0.5rem;
+  }
+  .filter-chip{
+    font-family:'EB Garamond', serif;
+    font-size:0.8rem;
+    padding:0.25rem 0.7rem;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    cursor:pointer;
+    color:var(--parchment-dim);
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .filter-chip:hover{ color:var(--parchment); }
+  .filter-chip.status-good.active{ color:var(--good); border-color:var(--good); background:rgba(127,174,106,0.12); }
+  .filter-chip.status-bad.active{ color:var(--bad); border-color:var(--bad); background:rgba(178,80,74,0.12); }
+  .filter-chip.status-neutral.active{ color:var(--gold-bright); border-color:var(--gold-bright); background:rgba(232,188,99,0.12); }
+  .filter-empty{
+    font-size:0.9rem;
+    color:var(--parchment-dim);
+    font-style:italic;
+    margin-top:1rem;
+  }
+
+  /* Ledger (provisions) */
+  .ledger{
+    margin-top:1.25rem;
+  }
+
+  .ledger-grid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:0.5rem;
+  }
+  @media (min-width:640px){
+    .ledger-grid{ grid-template-columns: 1fr 1fr; }
+  }
+
+  .ledger-row{
+    display:flex;
+    align-items:center;
+    gap:0.6rem;
+    padding:0.4rem 0.6rem;
+    border:1px solid var(--line);
+    border-radius:5px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
+
+  .item-glyph{
+    font-size:1.25rem;
+    width:1.6rem;
+    text-align:center;
+    flex-shrink:0;
+  }
+  .item-glyph-img{
+    width:3.2rem;
+    height:3.2rem;
+    object-fit:contain;
+    flex-shrink:0;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:2px;
+  }
+  .item-glyph-fallback{
+    width:3.2rem;
+    height:3.2rem;
+    border-radius:5px;
+    border:1px solid var(--line);
+    background:var(--ink-2);
+    color:var(--gold-bright);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Cinzel Decorative', serif;
+    font-size:1.1rem;
+    flex-shrink:0;
+  }
+  .item-label{
+    flex:1;
+    min-width:0;
+  }
+  .item-label .name{ display:block; font-size:0.92rem; line-height:1.25; }
+  .item-label .cost{ display:block; font-size:0.68rem; color:var(--parchment-dim); line-height:1.2; }
+
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:0.3rem;
+    flex-shrink:0;
+  }
+  .stepper button{
+    width:1.5rem;
+    height:1.5rem;
+    border-radius:4px;
+    border:1px solid var(--line);
+    background:var(--ink-2);
+    color:var(--parchment);
+    font-size:1rem;
+    line-height:1;
+    cursor:pointer;
+  }
+  .stepper button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+  .stepper .qty{
+    min-width:1.3rem;
+    text-align:center;
+    font-variant-numeric:tabular-nums;
+    font-size:0.92rem;
+  }
+
+  .subcost{
+    width:3.6rem;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+    color:var(--gold-bright);
+    flex-shrink:0;
+    font-size:0.85rem;
+  }
+
+  .totals{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:0.7rem 0.9rem;
+    background:rgba(198,154,69,0.06);
+    border:1px solid var(--line);
+    border-radius:5px;
+    margin-top:0.5rem;
+  }
+  .totals .label{
+    font-family:'Cinzel Decorative', serif;
+    font-size:0.85rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+  }
+  .totals .amount{
+    font-size:1.3rem;
+    color:var(--gold-bright);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .reset-row{
+    text-align:right;
+    margin-top:0.6rem;
+  }
+  .reset-row button{
+    background:none;
+    border:none;
+    color:var(--parchment-dim);
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    font-size:0.88rem;
+    cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  }
+  .reset-row button:hover{ color:var(--gold-bright); }
+
+  /* Tips */
+  .tips-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:1rem;
+    margin-top:1.25rem;
+  }
+  .tips-card{
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:0.9rem 1rem 1rem;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
+  .tips-card h3{
+    font-family:'Cinzel Decorative', serif;
+    font-size:0.85rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    margin:0 0 0.6rem;
+  }
+  .tips-card.effective h3{ color:var(--good); }
+  .tips-card.ineffective h3{ color:var(--bad); }
+  .tips-card.dangers h3{ color:var(--gold-bright); }
+  .tips-item{
+    display:flex;
+    justify-content:space-between;
+    gap:0.75rem;
+    padding:0.4rem 0;
+    border-bottom:1px solid var(--line);
+    font-size:0.95rem;
+  }
+  .tips-item:last-child{ border-bottom:none; }
+  .tips-item .t-label{ font-weight:600; flex-shrink:0; }
+  .tips-item .t-details{ color:var(--parchment-dim); text-align:right; font-size:0.88rem; }
+  .tips-empty{ color:var(--parchment-dim); font-style:italic; font-size:0.9rem; }
+
+  /* Curios */
+  .curio-card{
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:0.9rem 1rem 1rem;
+    margin-top:1rem;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  }
+  .curio-head{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+  }
+  .curio-icon{
+    width:100px;
+    height:100px;
+    object-fit:contain;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:5px;
+    flex-shrink:0;
+    padding:3px;
+  }
+  .curio-icon-fallback{
+    width:100px;
+    height:100px;
+    border-radius:5px;
+    border:1px solid var(--line);
+    background:var(--ink-2);
+    color:var(--gold-bright);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Cinzel Decorative', serif;
+    font-size:1.4rem;
+    flex-shrink:0;
+  }
+  .curio-title{ flex:1; min-width:0; }
+  .curio-title .name{ font-size:1.12rem; }
+  .curio-title .desc{ font-size:0.85rem; color:var(--parchment-dim); font-style:italic; margin-top:0.1rem; }
+  .curio-notes{ font-size:0.8rem; color:var(--parchment-dim); font-style:italic; margin-top:0.5rem; }
+
+  .curio-tags{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:0.3rem;
+    flex-shrink:0;
+    max-width:8.5rem;
+  }
+  .curio-tags .tag-row{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:0.3rem;
+  }
+  .tag-lozenge{
+    display:inline-block;
+    font-family:'EB Garamond', serif;
+    font-size:0.72rem;
+    letter-spacing:0.02em;
+    padding:0.15rem 0.55rem;
+    border-radius:999px;
+    border:1px solid;
+    white-space:nowrap;
+    line-height:1.4;
+  }
+  .tag-lozenge.status-good{ color:var(--good); border-color:var(--good); background:rgba(127,174,106,0.08); }
+  .tag-lozenge.status-bad{ color:var(--bad); border-color:var(--bad); background:rgba(178,80,74,0.08); }
+  .tag-lozenge.status-neutral{ color:var(--gold-bright); border-color:var(--gold-bright); background:rgba(232,188,99,0.08); }
+
+  @media (max-width:480px){
+    .curio-tags{ max-width:6.5rem; }
+    .tag-lozenge{ font-size:0.66rem; padding:0.12rem 0.45rem; }
+  }
+
+  .interactions-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:0.75rem;
+    font-size:0.88rem;
+  }
+  .interactions-table th{
+    text-align:left;
+    font-family:'Cinzel Decorative', serif;
+    font-size:0.68rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    padding:0.3rem 0.5rem;
+    border-bottom:1px solid var(--line);
+  }
+  .interactions-table td{
+    padding:0.45rem 0.5rem;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  .interactions-table tr:last-child td{ border-bottom:none; }
+  .item-cell{
+    display:flex;
+    align-items:center;
+    gap:0.4rem;
+    white-space:nowrap;
+  }
+  .item-cell img{
+    width:28px; height:28px; object-fit:contain; flex-shrink:0;
+  }
+  .item-cell .item-fallback{
+    width:28px;height:28px;border-radius:4px;background:var(--ink-3);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--gold-bright);
+  }
+  .outcome-line{
+    display:flex;
+    gap:0.4rem;
+    align-items:baseline;
+    margin-bottom:0.2rem;
+  }
+  .outcome-line:last-child{ margin-bottom:0; }
+  .outcome-chance{
+    font-variant-numeric:tabular-nums;
+    font-size:0.8rem;
+    color:var(--parchment-dim);
+    flex-shrink:0;
+    width:2.6rem;
+  }
+  .outcome-label.status-good{ color:var(--good); }
+  .outcome-label.status-bad{ color:var(--bad); }
+  .outcome-label.status-neutral{ color:var(--neutral); }
+  .outcome-effect{ color:var(--parchment-dim); font-size:0.85rem; }
+
+  footer{
+    margin-top:3rem;
+    text-align:center;
+    font-size:0.8rem;
+    color:var(--parchment-dim);
+    font-style:italic;
+  }
+  footer a{ color:var(--gold-bright); }
+
+  a{ color:var(--gold-bright); }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  @media (prefers-reduced-motion: reduce){
+    .flame{ animation:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="flame">🔥</span>
+    <h1>Darkest Companion+++</h1>
+    <p class="attribution">
+      An expansion of <a href="https://arnaud.rocks/darkest-companion/" target="_blank" rel="noopener">Arnaud Rinquin's Darkest Companion</a>
+      (<a href="https://github.com/ArnaudRinquin/darkest-companion" target="_blank" rel="noopener">source</a>),
+      adding the Crimson Court and Color of Madness DLC.
+    </p>
+  </header>
+
+  <div class="divider"><span>Choose your expedition</span></div>
+  <div class="locations" id="locations"></div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="provisions">Provisions</button>
+    <button class="tab-btn" data-tab="tips">Tips</button>
+    <button class="tab-btn" data-tab="curios">Curios</button>
+  </div>
+
+  <!-- PROVISIONS TAB -->
+  <div class="tab-panel active" id="panel-provisions">
+    <div class="divider"><span>Length</span></div>
+    <div class="lengths" id="lengths"></div>
+    <p class="note" id="locNote"></p>
+
+    <div class="divider"><span>Supply Ledger</span></div>
+    <div class="ledger" id="ledger"></div>
+    <div class="reset-row"><button id="resetBtn">Reset to recommended amounts</button></div>
+  </div>
+
+  <!-- TIPS TAB -->
+  <div class="tab-panel" id="panel-tips">
+    <div class="divider"><span>Field notes</span></div>
+    <div class="tips-grid" id="tipsGrid"></div>
+  </div>
+
+  <!-- CURIOS TAB -->
+  <div class="tab-panel" id="panel-curios">
+    <div class="divider"><span>Curios</span></div>
+    <div class="search-row">
+      <input type="text" id="curioSearch" class="search-input" placeholder="Search curio name or tag…" autocomplete="off">
+    </div>
+    <div class="sort-row">
+      <span class="sort-label">Sort</span>
+      <button class="sort-btn active" data-sort="game">Game order</button>
+      <button class="sort-btn" data-sort="alpha">A–Z</button>
+    </div>
+    <div class="filter-row" id="filterRow">
+      <button class="filter-head" id="filterToggle" type="button" aria-expanded="false">
+        <span class="sort-label">Filter by tag<span class="filter-count" id="filterCount"></span></span>
+        <span class="filter-chevron" id="filterChevron">▾</span>
+      </button>
+      <div class="filter-tags-wrap" id="filterTagsWrap">
+        <div class="filter-tags" id="filterTags"></div>
+        <div class="filter-clear-row"><button class="filter-clear" id="filterClear">Clear</button></div>
+      </div>
+    </div>
+    <p class="note">Each curio's first row shows what happens investigating bare-handed; the rows below show what changes if you treat it with an item first.</p>
+    <div id="curiosList"></div>
+  </div>
+
+  <footer>
+    Fan-made planning tool, unaffiliated with Red Hook Studios.<br>
+    Provisions figures for the base four and two DLC locations, following the overall design of
+    <a href="https://arnaud.rocks/darkest-companion/" target="_blank" rel="noopener">Darkest Companion</a> by Arnaud Rinquin.
+    Courtyard and Farmstead provisioning figures are community estimates.<br>
+    Curio and tips data for all six locations is adapted from the
+    <a href="https://darkestdungeon.wiki.gg/wiki/Module:Curios/Data" target="_blank" rel="noopener">Darkest Dungeon Wiki</a>,
+    used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>.
+  </footer>
+</div>
+
+<script>
+// ---------------------------------------------------------------
+// PROVISION CATALOG
+// ---------------------------------------------------------------
+const PROVISIONS = {
+  firewood:  { label: 'Firewood',         icon:'provisions/Firewood',       cost:0,   stack:1  },
+  food:      { label: 'Food',             icon:'provisions/Food',           cost:75,  stack:12 },
+  shovels:   { label: 'Shovels',          icon:'provisions/Shovel',         cost:250, stack:4  },
+  antivenoms:{ label: 'Antivenoms',       icon:'provisions/Antivenom',      cost:150, stack:6  },
+  bandages:  { label: 'Bandages',         icon:'provisions/Bandage',        cost:150, stack:6  },
+  herbs:     { label: 'Medicinal Herbs',  icon:'provisions/Medicinal_Herbs',cost:200, stack:6  },
+  keys:      { label: 'Skeleton Keys',    icon:'provisions/Skeleton_Key',   cost:200, stack:6  },
+  holyWaters:{ label: 'Holy Water',       icon:'provisions/Holy_Water',     cost:150, stack:6  },
+  torches:   { label: 'Torches',          icon:'provisions/Torch',          cost:75,  stack:8  },
+};
+
+const LOCATIONS = {
+  ruins: {
+    label:'Ruins', glyph:'⛪', dlc:null,
+    data:{
+      short:  { firewood:0, food:12, torches:8,  shovels:2, herbs:1, holyWaters:2, bandages:1, antivenoms:0, keys:1 },
+      medium: { firewood:1, food:18, torches:13, shovels:3, herbs:2, holyWaters:3, bandages:2, antivenoms:0, keys:2 },
+      long:   { firewood:2, food:20, torches:16, shovels:4, herbs:3, holyWaters:4, bandages:3, antivenoms:0, keys:3 },
+    }
+  },
+  warrens: {
+    label:'Warrens', glyph:'🐀', dlc:null,
+    data:{
+      short:  { firewood:0, food:12, torches:10, shovels:2, herbs:3, holyWaters:2, bandages:1, antivenoms:0, keys:2 },
+      medium: { firewood:1, food:18, torches:16, shovels:3, herbs:4, holyWaters:3, bandages:2, antivenoms:1, keys:3 },
+      long:   { firewood:2, food:20, torches:20, shovels:4, herbs:5, holyWaters:4, bandages:3, antivenoms:1, keys:3 },
+    }
+  },
+  weald: {
+    label:'Weald', glyph:'🌲', dlc:null,
+    data:{
+      short:  { firewood:0, food:12, torches:8,  shovels:3, herbs:1, holyWaters:1, bandages:2, antivenoms:2, keys:1 },
+      medium: { firewood:1, food:18, torches:13, shovels:5, herbs:2, holyWaters:2, bandages:3, antivenoms:3, keys:2 },
+      long:   { firewood:2, food:20, torches:16, shovels:6, herbs:2, holyWaters:3, bandages:4, antivenoms:4, keys:2 },
+    }
+  },
+  cove: {
+    label:'Cove', glyph:'🌊', dlc:null,
+    data:{
+      short:  { firewood:0, food:12, torches:8,  shovels:3, herbs:2, holyWaters:0, bandages:2, antivenoms:0, keys:1 },
+      medium: { firewood:1, food:18, torches:13, shovels:5, herbs:3, holyWaters:1, bandages:4, antivenoms:0, keys:2 },
+      long:   { firewood:2, food:20, torches:16, shovels:6, herbs:4, holyWaters:1, bandages:6, antivenoms:0, keys:3 },
+    }
+  },
+  courtyard: {
+    label:'Courtyard', glyph:'🩸', dlc:'blood', dlcTag:'Crimson Court',
+    lengthLabels:{ short:'First Expedition', medium:'Return (Medium)', long:'Return (Long)' },
+    note:'The Blood and The Cure aren\u2019t bought from the Caretaker \u2014 they\u2019re earned in the Courtyard itself, so they aren\u2019t in this shopping list. Save inventory space for them.',
+    data:{
+      short:  { firewood:0, food:20, torches:6, shovels:4, herbs:2, holyWaters:2, bandages:6, antivenoms:2, keys:0 },
+      medium: { firewood:1, food:10, torches:4, shovels:3, herbs:1, holyWaters:2, bandages:6, antivenoms:1, keys:0 },
+      long:   { firewood:1, food:14, torches:5, shovels:4, herbs:2, holyWaters:3, bandages:8, antivenoms:2, keys:0 },
+    }
+  },
+  farmstead: {
+    label:'Farmstead', glyph:'🌾', dlc:'madness', dlcTag:'Color of Madness',
+    lengthLabels:{ short:'Apprentice', medium:'Veteran', long:'Champion / Endless' },
+    note:'Torches and Shovels do nothing here \u2014 the Farmstead has no torchlight and no obstacles. A little Food is still worth bringing for the Miller\u2019s Hearth curio while camping, and a Skeleton Key or two covers the Stockpile.',
+    data:{
+      short:  { firewood:0, food:6,  torches:0, shovels:0, herbs:2, holyWaters:2, bandages:4, antivenoms:2, keys:0 },
+      medium: { firewood:0, food:10, torches:0, shovels:0, herbs:3, holyWaters:3, bandages:6, antivenoms:2, keys:1 },
+      long:   { firewood:0, food:14, torches:0, shovels:0, herbs:4, holyWaters:4, bandages:8, antivenoms:3, keys:1 },
+    }
+  },
+};
+
+const LENGTHS = ['short','medium','long'];
+const DEFAULT_LENGTH_LABELS = { short:'Short', medium:'Medium', long:'Long' };
+
+const TIPS_DATA = {"ruins":{"effective":[{"label":"Blight","details":"Most Ruins enemies have low Blight resist"},{"label":"Crusader","details":"Extra damage vs. Unholy"},{"label":"Direct damage","details":"Few high-PROT enemies here"}],"ineffective":[{"label":"Bleed","details":"High resistance among Ruins enemies"}],"dangers":[{"label":"Bone Spearman","details":"Dangerous at low party ranks"},{"label":"Stress dealers","details":"Bone Courtier, Cultist Acolyte, Madman"},{"label":"Books & bookshelves","details":"High risk of a bad curio outcome"}]},"warrens":{"effective":[{"label":"Bleed","details":"Low resistance among Warrens enemies"},{"label":"Houndmaster","details":"Extra damage vs. Beast"},{"label":"Scouting","details":"Pays off on this location's map layouts"}],"ineffective":[{"label":"Blight","details":"High resistance among Warrens enemies"}],"dangers":[{"label":"Swinetaur","details":"Especially dangerous in the back ranks"},{"label":"Swine Chopper","details":"Heavy bleed, hard to kill quickly"}]},"weald":{"effective":[{"label":"Bandages","details":"Many curios and enemies inflict bleed here"},{"label":"Antivenom","details":"Many curios and enemies inflict blight here"},{"label":"Shovels","details":"More obstacles to clear than other locations"},{"label":"Holy Water","details":"Several curios affect quirks and stress positively"}],"ineffective":[],"dangers":[{"label":"Crone","details":"Especially dangerous in the front ranks"},{"label":"Ectoplasm","details":"Can summon more of itself"},{"label":"Rabid Gnasher","details":"Fast, and deals bleed plus disease"}]},"cove":{"effective":[{"label":"Medicinal Herbs","details":"Used by several curios, traps, and debuff interactions"},{"label":"Shovels","details":"Several curio interactions call for one"},{"label":"Bandages","details":"Many enemies here deal bleed"},{"label":"Blight","details":"Low blight resistance paired with high PROT on some enemies"},{"label":"PROT debuffs","details":"Several Cove enemies carry high PROT"},{"label":"Occultist","details":"Most enemies are Eldritch-type"}],"ineffective":[{"label":"Bleed","details":"High resistance among Cove enemies"}],"dangers":[{"label":"Pelagic Guardian","details":"Hits hard"},{"label":"Thrall","details":"Explodes for heavy damage if left alive"}]},"courtyard":{"effective":[{"label":"Bleed","details":"Bloodsucker-type enemies are vulnerable to it"},{"label":"Stun","details":"Works well on some Bloodsuckers, notably Sycophant and Chevalier"},{"label":"Self-sustaining comps","details":"Flagellant, Jester, and Houndmaster keep long expeditions afloat without a dedicated healer"},{"label":"Occultist","details":"Bloodlight holds light at 100% all the time, so Hands of the Abyss is free to use"}],"ineffective":[{"label":"Blight","details":"Bloodsuckers generally resist it"}],"dangers":[{"label":"Crocodilian","details":"Recurring mini-boss with very high HP, damage, and mobility"},{"label":"Traps","details":"Courtyard traps hit hard or spawn extra enemies"},{"label":"Passive stress","details":"One random hero takes +1 Stress for every tile of corridor you cross"},{"label":"The Baron / Countess","details":"Epic-quest bosses with multi-phase fights and heavy self-healing"}]},"farmstead":{"effective":[{"label":"Blight","details":"The Miller and many Farmstead enemies are more vulnerable to it than to bleed"},{"label":"Plague Doctor / Shieldbreaker","details":"Reliable blight damage, and the Shieldbreaker pierces high PROT"},{"label":"Party-wide healing","details":"Single-target heals fall behind the pace of endless waves; Vestal-style AoE holds up better"}],"ineffective":[{"label":"Bleed","details":"The Miller is nearly immune to it, and Flagellant-style bleed comps struggle here"}],"dangers":[{"label":"The Miller","details":"Boss with two actions per round; summons Scarecrows, Farmhands, and Sleeper's Heralds"},{"label":"The Miasma","details":"Replaces the torch/light meter and applies a rotating random debuff instead"},{"label":"No retreat penalty tuning","details":"Heroes can permanently die in the Apprentice and Veteran missions; a wipe loses all carried inventory"}]}};
+const CURIOS_DATA = {"ruins":[{"name":"Crate","icon":"crate","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom","description":"The crate contains stashed heirlooms!"},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The crate is empty"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Discarded Pack","icon":"discarded_pack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":60.0,"type":"loot","label":"Loot","status":"good","effect":"Supplies x1 + Gold/Gems x2 + Journal Entry","description":"The pack contains loot!"},{"chance":20.0,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"The pack has a map inside it!"},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The pack has already been looted."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sack","icon":"sack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Gold","description":"The sack's contents are yours..."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The sack is empty."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sconce","icon":"sconce","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"torch","label":"Torch","status":"good","effect":"Torch","description":"You salvage the unburned torch."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Shambler's Altar","icon":"shamblers_altar","description":"It says: \"The sacrifice of fire is the gate to ruin! Place a torch if you crave the void!\"","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Shambler","description":"A terrifying figure emerges from the darkness!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Touching the altar has no effect."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Stack of Books","icon":"stack_of_books","description":"A stack of literary treasures in an unlikely location.","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"stress","label":"Stress","status":"bad","effect":"+100","description":"The hero destroyed knowledge, and now must bear the guilt of it!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":22.2,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":16.7,"type":"journal","label":"Journal entry","status":"good","effect":null,"description":""},{"chance":22.2,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"The hero reads a most unsettling passage."},{"chance":11.1,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":11.1,"type":"decrease_light","label":"Light down","status":"bad","effect":"Decrease Light Meter by 25","description":"The hero reads a most unsettling passage."},{"chance":16.7,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The volumes are desiccated and unremarkable."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Throbbing Cocoons (Infestation)","icon":"throbbing_cocoons_infestation","description":"Shifting and bulging organisms hide behind translucent walls.","notes":"Only appears at high infestation. See also Curios#Throbbing Cocoons Variants.","interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Gatekeeper and mixture of Manservants, Supplicants, or Sycophants","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Eldritch Altar","icon":"eldritch_alter","description":"An altar dedicated to unholy abominations. Perhaps a great power lies within.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The holy water purifies the altar!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"A terrifying presence is felt nearby!"},{"chance":10.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The hero is absolved of a sin."},{"chance":50.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The altar's purpose is purely decorative."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (1)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x4","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x3","description":"The antivenom neutralizes a poison trap in a hidden compartment!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (2)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x3","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":66.7,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":33.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Unlocked Strongbox","icon":"unlocked_strongbox","description":"A long-forgotten strongbox sits on the cold stone floor, its contents unknown.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Ancient Artifact","icon":"ancient_artifact","description":"A chest untouched for centuries. There's a locked compartment on the side of it.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Collector Trinket or Puzzling Trapezohedron x3","description":"The secret compartment contains great treasures!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x3","description":"Someone left behind quite a stash."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Alchemy Table","icon":"alchemy_table","description":"A partially intact set of experimental equipment.","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x2","description":"The herbs disinfect the station, allowing for successful research."}],"itemIconSource":"companion"},{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"torchlight","label":"Light up","status":"good","effect":"Increase Light Meter to 100","description":"The torch oil helps create a powerful blazing mixture!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"An accident occurs during the experiment."},{"chance":25.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x1","description":"New metals are synthesized."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The experiments do not yield any findings."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Altar of Light","icon":"altar_of_light","description":"A small holy altar seems out of place against the backdrop of corruption.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"buff","label":"Buff","status":"good","effect":"+30% DMG","description":"You have curried favor from the gods!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"buff","label":"Buff","status":"good","effect":"+20% DMG","description":""}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Bookshelf","icon":"bookshelf","description":"A bookshelf full of old, leather-bound books.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":20.0,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"A map is found tucked between the volumes."},{"chance":20.0,"type":"stress","label":"Stress","status":"bad","effect":"+15","description":"The hero reads a most unsettling passage."},{"chance":13.3,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"The knowledge forever changes the hero."},{"chance":6.7,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"The knowledge forever changes the hero."},{"chance":20.0,"type":"journal","label":"Journal entry","status":"good","effect":null,"description":""},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The volumes are dull and uninteresting."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Confession Booth","icon":"confession_booth","description":"A forsaken confession booth. It hasn't been used in years.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-30","description":"The ritual relieves the hero."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"stress","label":"Stress","status":"bad","effect":"+15","description":"The hero's history of sins is too much to bear."},{"chance":25.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Trinket x6 + Journal Entry","description":"The booth contains hidden treasure..."},{"chance":25.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The hero is absolved of a sin."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Decorative Urn","icon":"decorative_urn","description":"An urn holds ashes of the departed.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gems/Trinket x2 + Gems x2","description":"The consecrated water dissolves the ashes. Valuables remain!"}],"itemIconSource":"companion"},{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Guilty Conscience","description":"What sort of person defiles the dead?"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":44.4,"type":"loot","label":"Loot","status":"good","effect":"Gems/Trinket x1 + Gems x2","description":"Sentimental gifts are hidden inside."},{"chance":22.2,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"The hero becomes infected by the ashes."},{"chance":7.4,"type":"disease","label":"Disease","status":"bad","effect":"Creeping Cough","description":"The ashes make the hero cough violently."},{"chance":3.7,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"The hero contracts a deadly disease."},{"chance":22.2,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The urn's purpose is purely decorative."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Iron Maiden","icon":"iron_maiden","description":"A rusty iron maiden stands against the wall, clasped shut.","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"The herbs cleanse the maiden, allowing a thorough search."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"A few treasures are hidden in the iron maiden."},{"chance":20.0,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Claustrophobia","description":""},{"chance":13.3,"type":"disease","label":"Disease","status":"bad","effect":"Tetanus","description":"The hero inhales foul vapours."},{"chance":6.7,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":""},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Locked Display Cabinet","icon":"locked_display_cabinet","description":"There could be valuables left inside, but this cabinet is locked.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Heirlooms x3 + Gold/Gems x2","description":"Treasures are stashed in the cabinet!"}],"itemIconSource":"companion"},{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Heirlooms x2 + Gold/Gems x2","description":"Smashed the cabinet open..."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":50.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Holy Fountain","icon":"holy_fountain","description":"An ornate fountain of holy purport.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-20, Cure Status Effects, Heal 12 HP","description":"Divine benefit!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-10, Cure Status Effects, Heal 5 HP","description":""},{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x2","description":"Propitiations are found at the bottom of the fountain."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Locked Sarcophagus","icon":"locked_sarcophagus","description":"An ornate sarcophagus. It's locked.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Heirlooms x2 + Gold/Trinket x1","description":"The Skeleton Key opens the sarcophagus to reveal its contents."}],"itemIconSource":"companion"},{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Heirlooms x1 + Gold/Trinket x1","description":"Broke into the sarcophagus..."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":50.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sarcophagus","icon":"sarcophagus","description":"An ornate sarcophagus. It is slightly ajar.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":60.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Heirlooms x2","description":"Hidden treasures!"},{"chance":20.0,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Thanatophobia","description":"The hero contemplates mortality..."},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Suit of Armor","icon":"suit_of_armor","description":"An antique suit of armor stands amidst the ruins.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"buff","label":"Buff","status":"good","effect":"+15% PROT, +10 DODGE","description":"The armor protects the hero with a knightly aura."},{"chance":12.5,"type":"positive_quirk","label":"Positive quirk","status":"good","effect":"Ruins Adventurer","description":""},{"chance":12.5,"type":"positive_quirk","label":"Positive quirk","status":"good","effect":"Ruins Tactician","description":""}],"itemIconSource":"companion"}],"iconSource":"companion"}],"weald":[{"name":"Crate","icon":"crate","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom","description":"The crate contains stashed heirlooms!"},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The crate is empty"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Discarded Pack","icon":"discarded_pack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":60.0,"type":"loot","label":"Loot","status":"good","effect":"Supplies x1 + Gold/Gems x2 + Journal Entry","description":"The pack contains loot!"},{"chance":20.0,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"The pack has a map inside it!"},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The pack has already been looted."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sack","icon":"sack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Gold","description":"The sack's contents are yours..."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The sack is empty."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sconce","icon":"sconce","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"torch","label":"Torch","status":"good","effect":"Torch","description":"You salvage the unburned torch."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Shambler's Altar","icon":"shamblers_altar","description":"It says: \"The sacrifice of fire is the gate to ruin! Place a torch if you crave the void!\"","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Shambler","description":"A terrifying figure emerges from the darkness!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Touching the altar has no effect."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Stack of Books","icon":"stack_of_books","description":"A stack of literary treasures in an unlikely location.","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"stress","label":"Stress","status":"bad","effect":"+100","description":"The hero destroyed knowledge, and now must bear the guilt of it!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":22.2,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":16.7,"type":"journal","label":"Journal entry","status":"good","effect":null,"description":""},{"chance":22.2,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"The hero reads a most unsettling passage."},{"chance":11.1,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":11.1,"type":"decrease_light","label":"Light down","status":"bad","effect":"Decrease Light Meter by 25","description":"The hero reads a most unsettling passage."},{"chance":16.7,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The volumes are desiccated and unremarkable."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Throbbing Cocoons (Infestation)","icon":"throbbing_cocoons_infestation","description":"Shifting and bulging organisms hide behind translucent walls.","notes":"Only appears at high infestation. See also Curios#Throbbing Cocoons Variants.","interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Gatekeeper and mixture of Manservants, Supplicants, or Sycophants","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Eldritch Altar","icon":"eldritch_alter","description":"An altar dedicated to unholy abominations. Perhaps a great power lies within.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The holy water purifies the altar!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"A terrifying presence is felt nearby!"},{"chance":10.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The hero is absolved of a sin."},{"chance":50.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The altar's purpose is purely decorative."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (1)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x4","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x3","description":"The antivenom neutralizes a poison trap in a hidden compartment!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (2)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x3","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":66.7,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":33.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Unlocked Strongbox","icon":"unlocked_strongbox","description":"A long-forgotten strongbox sits on the cold stone floor, its contents unknown.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Ancient Artifact","icon":"ancient_artifact","description":"A chest untouched for centuries. There's a locked compartment on the side of it.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Collector Trinket or Puzzling Trapezohedron x3","description":"The secret compartment contains great treasures!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x3","description":"Someone left behind quite a stash."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Beast Carcass","icon":"beast_carcass","description":"Something has recently mutilated this creature...","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Food x2","description":"The medicinal herbs rid the carcass of any diseases."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":42.9,"type":"loot","label":"Loot","status":"good","effect":"Food x1","description":"There is still some meat on these bones."},{"chance":19.0,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"Exploring the carcass was not without risk of disease..."},{"chance":9.5,"type":"disease","label":"Disease","status":"bad","effect":"Rabies","description":"Exploring the carcass was not without risk of disease..."},{"chance":14.3,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Zoophobia","description":"The hero is distraught by the sight of the carcass."},{"chance":14.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The beast has nothing left to offer."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Eerie Spiderweb","icon":"eerie_spiderweb","description":"A spiderweb with a strange glow to it. There might be something behind it.","notes":null,"interactions":[{"item":"bandage","itemLabel":"Bandage","itemIcon":"provisions/Bandage","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x2 + Gems/Trinket x1","description":"The bandages protect the hero's hands during the search."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x1 + Gems/Trinket x1","description":""},{"chance":10.0,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Slow Reflexes","description":"The hero is covered in a sticky goo."},{"chance":10.0,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Slowdraw","description":"The hero is covered in a sticky goo."},{"chance":40.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Left Luggage","icon":"left_luggage","description":"Someone dropped this recently. Probably on the run. It has a lock on it.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x3","description":"The Skeleton Key unlocks a hidden compartment."}],"itemIconSource":"companion"},{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x3","description":"The Antivenom neutralizes a poison trap in a hidden compartment!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x4 + Journal Entry","description":"The luggage clearly shouldn't have been abandoned. Valuables inside!"},{"chance":50.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Mummified Remains","icon":"mummified_remains","description":"Ancient remains. The body looks well preserved.","notes":null,"interactions":[{"item":"bandage","itemLabel":"Bandage","itemIcon":"provisions/Bandage","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Trinkets x2","description":"A bandage provides protection for a thorough search!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Trinkets x1","description":"Treasures are encased within the remains."},{"chance":40.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":""},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Old Tree","icon":"old_tree","description":"This tree has a huge hole in the trunk. Perhaps there's something inside...","notes":null,"interactions":[{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x3","description":"The antivenom protects against the poisonous sap, allowing a thorough search..."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"Someone couldn't resist stashing treasures inside."},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"The hero is covered in poisonous sap."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Sometimes a tree is just a tree."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Shallow Grave","icon":"shallow_grave","description":"A grave, dug in haste.","notes":null,"interactions":[{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gems/Heirlooms x3","description":"Looks like grave robbing pays off sometimes!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"Gravedigging is not the healthiest of professions..."},{"chance":50.0,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"Gravedigging is not the healthiest of professions..."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Troubling Effigy","icon":"troubling_effigy","description":"An unsettling effigy erected in service to a mysterious god.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"The holy water has a powerful effect!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":18.8,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"The effigy imbues the hero with energy..."},{"chance":18.8,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"The effigy imbues the hero with energy..."},{"chance":18.8,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"The effigy lashes out, rejecting the hero!"},{"chance":9.4,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"The effigy lashes out, rejecting the hero!"},{"chance":9.4,"type":"stress","label":"Stress","status":"bad","effect":"+15","description":"The effigy lashes out, rejecting the hero!"},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Any power the effigy once had is now lost."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Ancient Coffin","icon":"ancient_coffin","description":"An old coffin. It is slightly ajar.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Heirloom x2","description":"The coffin contains hidden treasures."},{"chance":8.3,"type":"positive_quirk","label":"Positive quirk","status":"good","effect":"Weald Adventurer","description":"Findings in the coffin give the hero insight into the nature of this world."},{"chance":8.3,"type":"positive_quirk","label":"Positive quirk","status":"good","effect":"Weald Explorer","description":"Findings in the coffin give the hero insight into the nature of this world."},{"chance":33.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"There is nothing of value inside."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Pristine Fountain","icon":"pristine_fountain","description":"A beautiful fountain. It looks unaffected by the surrounding chaos.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-30","description":"The hero consecrates the fountain."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-20","description":"The fountain reinvigorates the hero."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Traveler's Tent","icon":"travelers_tent","description":"Someone has camped here recently.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":37.5,"type":"loot","label":"Loot","status":"good","effect":"Gold/Supplies x4 + Gold/Heirlooms x4 + Journal Entry","description":"Someone left valuables inside the tent."},{"chance":37.5,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"A map of the area is found inside the tent."},{"chance":12.5,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"The fate of the tent's occupant is found inside..."},{"chance":12.5,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Nothing is left inside the tent."}],"itemIconSource":"companion"}],"iconSource":"companion"}],"cove":[{"name":"Crate","icon":"crate","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom","description":"The crate contains stashed heirlooms!"},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The crate is empty"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Discarded Pack","icon":"discarded_pack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":60.0,"type":"loot","label":"Loot","status":"good","effect":"Supplies x1 + Gold/Gems x2 + Journal Entry","description":"The pack contains loot!"},{"chance":20.0,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"The pack has a map inside it!"},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The pack has already been looted."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sack","icon":"sack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Gold","description":"The sack's contents are yours..."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The sack is empty."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sconce","icon":"sconce","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"torch","label":"Torch","status":"good","effect":"Torch","description":"You salvage the unburned torch."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Shambler's Altar","icon":"shamblers_altar","description":"It says: \"The sacrifice of fire is the gate to ruin! Place a torch if you crave the void!\"","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Shambler","description":"A terrifying figure emerges from the darkness!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Touching the altar has no effect."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Stack of Books","icon":"stack_of_books","description":"A stack of literary treasures in an unlikely location.","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"stress","label":"Stress","status":"bad","effect":"+100","description":"The hero destroyed knowledge, and now must bear the guilt of it!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":22.2,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":16.7,"type":"journal","label":"Journal entry","status":"good","effect":null,"description":""},{"chance":22.2,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"The hero reads a most unsettling passage."},{"chance":11.1,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":11.1,"type":"decrease_light","label":"Light down","status":"bad","effect":"Decrease Light Meter by 25","description":"The hero reads a most unsettling passage."},{"chance":16.7,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The volumes are desiccated and unremarkable."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Throbbing Cocoons (Infestation)","icon":"throbbing_cocoons_infestation","description":"Shifting and bulging organisms hide behind translucent walls.","notes":"Only appears at high infestation. See also Curios#Throbbing Cocoons Variants.","interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Gatekeeper and mixture of Manservants, Supplicants, or Sycophants","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Eldritch Altar","icon":"eldritch_alter","description":"An altar dedicated to unholy abominations. Perhaps a great power lies within.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The holy water purifies the altar!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"A terrifying presence is felt nearby!"},{"chance":10.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The hero is absolved of a sin."},{"chance":50.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The altar's purpose is purely decorative."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (1)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x4","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x3","description":"The antivenom neutralizes a poison trap in a hidden compartment!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (2)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x3","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":66.7,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":33.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Unlocked Strongbox","icon":"unlocked_strongbox","description":"A long-forgotten strongbox sits on the cold stone floor, its contents unknown.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Ancient Artifact","icon":"ancient_artifact","description":"A chest untouched for centuries. There's a locked compartment on the side of it.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Collector Trinket or Puzzling Trapezohedron x3","description":"The secret compartment contains great treasures!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x3","description":"Someone left behind quite a stash."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Barnacle Crusted Chest","icon":"bernacle_crusted_chest","description":"A treasure chest blanketed in barnacles.","notes":null,"interactions":[{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x3","description":"The shovel makes easy work of the barnacles."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"There's still booty inside!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"The hero received a nasty gash."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Nothing inside."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Bas-Relief","icon":"bas_relief","description":"A puzzlingly ancient sculpture of dizzying implication...","notes":null,"interactions":[{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"stress","label":"Stress","status":"bad","effect":"+100","description":"The bas-relief is crushed with the shovel. Doesn't feel right..."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":66.7,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"The message has a lasting impact on the hero..."},{"chance":22.2,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"The message has a lasting impact on the hero..."},{"chance":11.1,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":""}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Brackish Tide Pool","icon":"brackish_tidepool","description":"A pool of water cupped in smooth stone. Its color looks sightly off...","notes":null,"interactions":[{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":50.0,"type":"heal","label":"Heal","status":"good","effect":"+5 HP","description":"The water is purified and cleanses the hero."},{"chance":50.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-6","description":"The water is purified and cleanses the hero."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"buff","label":"Buff","status":"good","effect":"+33% Blight, Bleed, Disease, Debuff Resistances","description":"The hero's resilience is heightened!"},{"chance":25.0,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"The water is contaminated..."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Eerie Coral","icon":"eerie_coral","description":"There is something odd about this coral.","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"Cleansing the coral brings out its profound healing qualities."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-10","description":"This coral is soothing to the mind."},{"chance":25.0,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"The coral is abrasive and unnerving"},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Nothing here after all."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Fish Carcass","icon":"giant_fish_carcass","description":"A stuffed sea creature has washed ashore. Wonder what it ate...","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gem/Trinkets x2 + Gem/Gold x1 + Supplies x2","description":"The gut is cleansed, allowing a safe search of its contents."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":16.7,"type":"loot","label":"Loot","status":"good","effect":"Gem/Trinkets x1 Gold/Gem x1 + Supply x1","description":"The fish ate more than its fair share."},{"chance":16.7,"type":"disease","label":"Disease","status":"bad","effect":"The Red Plague","description":"The creature is harbouring a dangerous infection."},{"chance":11.1,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's a trap!"},{"chance":5.6,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's a trap!"},{"chance":50.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Only digested fish inside."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Fish Idol","icon":"fish_idol","description":"A strange presence is felt near this statue of worship.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"buff","label":"Buff","status":"good","effect":"+18% DMG","description":"An aura of strength engulfs the hero!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"debuff","label":"Debuff","status":"bad","effect":"-25% DMG, -10 ACC","description":"An evil force strength engulfs the hero!"},{"chance":50.0,"type":"debuff","label":"Debuff","status":"bad","effect":"-12 DODGE","description":"An evil force strength engulfs the hero!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Giant Oyster","icon":"giant_oyster","description":"A live oyster. Who knows what value it hides...","notes":null,"interactions":[{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Trinkets x3","description":"The shovel prevents the oyster from closing."}],"itemIconSource":"companion"},{"item":"dog_treats","itemLabel":"Dog Treats","itemIcon":"provisions/Dog_Treats","results":[{"chance":100.0,"type":"buff","label":"Buff","status":"good","effect":"+25 DODGE","description":"The oyster seems to like these..."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Trinkets x2","description":"There are treasures hidden inside!"},{"chance":40.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"The oyster slams shut!"},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Someone has already cleaned house."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Ship's Figurehead","icon":"ships_figurehead","description":"The figurehead emits a marvelous aura.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":66.7,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-25 to -30","description":"The great artifact inspires the hero!"},{"chance":33.3,"type":"buff","label":"Buff","status":"good","effect":"+20% DMG, +4 SPD","description":"The great artifact inspires the hero!"}],"itemIconSource":"companion"}],"iconSource":"companion"}],"warrens":[{"name":"Crate","icon":"crate","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom","description":"The crate contains stashed heirlooms!"},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The crate is empty"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Discarded Pack","icon":"discarded_pack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":60.0,"type":"loot","label":"Loot","status":"good","effect":"Supplies x1 + Gold/Gems x2 + Journal Entry","description":"The pack contains loot!"},{"chance":20.0,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"The pack has a map inside it!"},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The pack has already been looted."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sack","icon":"sack","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Gold","description":"The sack's contents are yours..."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The sack is empty."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sconce","icon":"sconce","description":null,"notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"torch","label":"Torch","status":"good","effect":"Torch","description":"You salvage the unburned torch."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Shambler's Altar","icon":"shamblers_altar","description":"It says: \"The sacrifice of fire is the gate to ruin! Place a torch if you crave the void!\"","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Shambler","description":"A terrifying figure emerges from the darkness!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Touching the altar has no effect."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Stack of Books","icon":"stack_of_books","description":"A stack of literary treasures in an unlikely location.","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"stress","label":"Stress","status":"bad","effect":"+100","description":"The hero destroyed knowledge, and now must bear the guilt of it!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":22.2,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":16.7,"type":"journal","label":"Journal entry","status":"good","effect":null,"description":""},{"chance":22.2,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"The hero reads a most unsettling passage."},{"chance":11.1,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"Reading a few pages has a lasting effect on the hero..."},{"chance":11.1,"type":"decrease_light","label":"Light down","status":"bad","effect":"Decrease Light Meter by 25","description":"The hero reads a most unsettling passage."},{"chance":16.7,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The volumes are desiccated and unremarkable."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Throbbing Cocoons (Infestation)","icon":"throbbing_cocoons_infestation","description":"Shifting and bulging organisms hide behind translucent walls.","notes":"Only appears at high infestation. See also Curios#Throbbing Cocoons Variants.","interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Gatekeeper and mixture of Manservants, Supplicants, or Sycophants","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Eldritch Altar","icon":"eldritch_alter","description":"An altar dedicated to unholy abominations. Perhaps a great power lies within.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The holy water purifies the altar!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"A terrifying presence is felt nearby!"},{"chance":10.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The hero is absolved of a sin."},{"chance":50.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The altar's purpose is purely decorative."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (1)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x4","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x3","description":"The antivenom neutralizes a poison trap in a hidden compartment!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirloom x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Heirloom Chest (2)","icon":"heirloom_chest","description":"A chest with your family's sigil.","notes":"See also Curios#Heirloom Chest Variants.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x3","description":"The key unlocks a hidden compartment!"}],"itemIconSource":"companion"},{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":66.7,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":33.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"It's trapped!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Unlocked Strongbox","icon":"unlocked_strongbox","description":"A long-forgotten strongbox sits on the cold stone floor, its contents unknown.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"The contents are yours!"},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It's trapped!"}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Ancient Artifact","icon":"ancient_artifact","description":"A chest untouched for centuries. There's a locked compartment on the side of it.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Collector Trinket or Puzzling Trapezohedron x3","description":"The secret compartment contains great treasures!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x3","description":"Someone left behind quite a stash."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Dinner Cart","icon":"dinner_cart","description":"A cart of human remains. It looks much like a feeding trough. Disgusting.","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Food x3 + Gold/Trinket x1","description":"The herbs cleanse the meat, making some of it edible."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":37.5,"type":"loot","label":"Loot","status":"good","effect":"Food x1 + Gold/Trinket x1","description":"Some of this meat looks edible..."},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"The meat makes the hero violently ill."},{"chance":12.5,"type":"disease","label":"Disease","status":"bad","effect":"The Black Plague","description":"The swine are not cleanly folk..."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Nothing but rotting bodies."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Moonshine Barrel","icon":"moonshine_barrel","description":"A barrel that reeks of powerful liquors.","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"buff","label":"Buff","status":"good","effect":"+30% DMG","description":"Medicinal herbs purify the brew, and it is ever potent!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":33.3,"type":"loot","label":"Loot","status":"good","effect":"Food x1 + Gold/Supplies x1","description":"The barrel contains stashed treasures."},{"chance":33.3,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"The moonshine is kicked-off making the hero ill."},{"chance":11.1,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Tippler","description":"The hero acquires a taste for this magnificent sauce..."},{"chance":22.2,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The barrel is completely empty."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Occult Scrawlings","icon":"occult_scrawlings","description":"Scrawlings written on what looks like stretched and tanned human flesh...","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"debuff","label":"Debuff","status":"bad","effect":"-20 DODGE","description":"The holy water hisses and the hero feels... wrong."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":33.3,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"The scrawling forever changes the hero."},{"chance":16.7,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"The scrawling forever changes the hero."},{"chance":25.0,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"The sight is too much for the hero to bear."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The scrawlings are dull and uninteresting."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Pile of Bones","icon":"pile_of_bones","description":"All that's left of a previous adventurer, perhaps.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"The pile is purified, allowing a thorough search!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":25.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2","description":"The bones house some supplies."},{"chance":25.0,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Bloodthirsty","description":"The hero becomes fascinated with the remains..."},{"chance":25.0,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"The hero is infected by the rotten pile."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Nothing is found amongst the remains."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Pile of Scrolls","icon":"pile_of_scrolls","description":"A bunch of scrolls. The cursive is sloppy and difficult to read.","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"The scrolls are full of evil writings. Burning them is a weight off the hero's shoulders..."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":28.6,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"The scrolls are a well-rendered map of the road ahead..."},{"chance":14.3,"type":"stress","label":"Stress","status":"bad","effect":"+15","description":"The scrolls contain hideous portents."},{"chance":14.3,"type":"journal","label":"Journal entry","status":"good","effect":null,"description":""},{"chance":9.5,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"The scrolls forever change the hero."},{"chance":4.8,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"The scrolls forever change the hero."},{"chance":28.6,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The scrolls are merely records of dull transactions..."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Rack of Blades","icon":"rack_of_blades","description":"A rack of dulled, rusty knives. They are covered in fresh blood.","notes":null,"interactions":[{"item":"bandage","itemLabel":"Bandage","itemIcon":"provisions/Bandage","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x2 + Food x1","description":"The bandage protects the hero's hands during the search."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Gems x1 + Food x1","description":"Extra supplies are found amongst the knives."},{"chance":40.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"The hero receives a nasty gash."},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Nothing useful here."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Bone Altar","icon":"bone_altar","description":"A dark altar with skulls prominently on display. A strange power can be felt in its presence.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"buff","label":"Buff","status":"good","effect":"+15% DMG, +10 ACC, +5% CRT, Cure Status Effects","description":"The altar infuses the hero with great power."}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Makeshift Dining Table","icon":"makeshift_dining_table","description":"An oddly assembled dining table. There might still be food scraps around.","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Food x2 + Gold/Supplies x1","description":"The herbs kill any diseases harbored in the food."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":25.0,"type":"loot","label":"Loot","status":"good","effect":"Food x1 + Gold/Supplies x1","description":"The table contains leftovers from a previous meal."},{"chance":25.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":""},{"chance":25.0,"type":"disease","label":"Disease","status":"bad","effect":"Tapeworm","description":"The meat is not fully cooked..."},{"chance":25.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"}],"iconSource":"companion"},{"name":"Sacrificial Stone","icon":"sacrificial_stone","description":"A stone used for ancient, barbaric rituals.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"stress","label":"Stress","status":"bad","effect":"+50","description":"The hero is deeply disturbed."},{"chance":25.0,"type":"remove_negative_quirk","label":"Remove negative quirk","status":"good","effect":null,"description":"A sinful behaviour is vanquished."},{"chance":12.5,"type":"positive_quirk","label":"Positive quirk","status":"good","effect":"Warrens Explorer","description":"The stone's carvings give great insight into these Warrens..."},{"chance":12.5,"type":"positive_quirk","label":"Positive quirk","status":"good","effect":"Warrens Scrounger","description":"The stone's carvings give great insight into these Warrens..."}],"itemIconSource":"companion"}],"iconSource":"companion"}],"courtyard":[{"name":"Pile of Strange Bones","icon":"pile_of_strange_bones","description":"A heap of peculiar bones and dusty sinew litters the floor.","notes":null,"interactions":[{"item":"bandage","itemLabel":"Bandage","itemIcon":"provisions/Bandage","results":[{"chance":50.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x1","description":"Cloth is used to protect fragile flesh against the barbs and mandibles."},{"chance":50.0,"type":"blood","label":"The Blood","status":"good","effect":"The Blood","description":"Cloth is used to protect fragile flesh against the barbs and mandibles."}],"itemIconSource":"companion"},{"item":"blood","itemLabel":"The Blood","itemIcon":"blood","results":[{"chance":100.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Supplicant, Sycophant, and Esquire","description":""}],"itemIconSource":"missing"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":50.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"An insectoid mandible pierces the hero's skin!"},{"chance":20.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2 + 16.7% The Blood","description":"Baubles and other items of value are found in the grisly remains!"},{"chance":10.0,"type":"crimson_curse","label":"Crimson Curse","status":"bad","effect":null,"description":"Your blood is tainted with a strange infection!"},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"These remains hold no danger nor anything of value either."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Bloodflowers","icon":"bloodflowers","description":"The soil is soaked through with half-clotted blood which seemingly feeds these vital blooms.","notes":null,"interactions":[{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Heirlooms x2 + Any Loot x1","description":"Digging reveals loot!"}],"itemIconSource":"companion"},{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"stress","label":"Stress","status":"bad","effect":"+15","description":"The wilting gives off a noxious odour!"}],"itemIconSource":"companion"},{"item":"blood","itemLabel":"The Blood","itemIcon":"blood","results":[{"chance":100.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The flowers surge with growth! But the blood invites no other occurence."}],"itemIconSource":"missing"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":38.5,"type":"stress","label":"Stress","status":"bad","effect":"+15","description":"The blossoms reek of death, pestilence and unfathomable nightmares!"},{"chance":23.1,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"A map is nestled between the thorns and blossoms!"},{"chance":15.3,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2 + 16.7% The Blood","description":"The potting soil reveals its treasure!"},{"chance":5.1,"type":"disease","label":"Disease","status":"bad","effect":"Tetanus","description":"Thorns hook into the flesh, a cloying sap seeps into the hero's blood!"},{"chance":2.5,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":""},{"chance":15.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Apparently these ghoulish flowers are harmless."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Damned Fountain","icon":"damned_fountain","description":"A bubbling fountain spews crimson ichor from some damnable source.","notes":null,"interactions":[{"item":"holy_water","itemLabel":"Holy Water","itemIcon":"provisions/Holy_Water","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-30","description":"The purified liquid offers a surprising boon!"}],"itemIconSource":"companion"},{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"stress","label":"Stress","status":"bad","effect":"+5","description":"Burning the blood stings the nostrils and turns the stomach."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":60.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"The hero's scars weep open when bathed in the crimson fluid!"},{"chance":20.0,"type":"crimson_curse","label":"Crimson Curse","status":"bad","effect":null,"description":"This bloody artifact invites ailment!"},{"chance":20.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2 + 16.7% Bleed","description":"Treasure lies in the gore-filled basin!"}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Disturbing Diversion","icon":"disturbing_diversion","description":"Mouldering evidence of a society's depravity.","notes":null,"interactions":[{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"heirloom","label":"Heirloom","status":"good","effect":"Heirlooms x3","description":"What sadist put treasure in its skull?"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":40.0,"type":"stress","label":"Stress","status":"bad","effect":"+25","description":"You picture debauched and bloody games..."},{"chance":15.0,"type":"positive_quirk_random","label":"Random positive quirk","status":"good","effect":null,"description":"Suppressed desires awaken!"},{"chance":15.0,"type":"negative_quirk_random","label":"Random negative quirk","status":"bad","effect":null,"description":"Suppressed desires awaken!"},{"chance":10.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2 + 16.7% The Blood x2","description":"Wagers long forgotten."},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The remains yield nothing."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Forgotten Delicacies","icon":"forgotten_delicacies","description":"An anachronistic mixture of both rotted and fresh victuals adorn the cart.","notes":null,"interactions":[{"item":"medicinal_herbs","itemLabel":"Medicinal Herbs","itemIcon":"provisions/Medicinal_Herbs","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Food x2 + Gold/Supplies x1","description":"Precise use of herbs purifies the tainted remains."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":20.0,"type":"loot","label":"Loot","status":"good","effect":"Gold/Supplies x4 + Supplies x1 + 25% The Blood","description":"There are valuables scattered about the repast."},{"chance":20.0,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Stress Eater","description":"What a peculiar flavour..."},{"chance":20.0,"type":"blight","label":"Blight","status":"bad","effect":null,"description":"It is tainted!"},{"chance":13.3,"type":"crimson_curse","label":"Crimson Curse","status":"bad","effect":null,"description":"There is nothing but rot inside the seemingly fresh morsels!"},{"chance":6.7,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"There is nothing but rot inside the seemingly fresh morsels!"},{"chance":20.0,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"There remains nothing worthy of your time."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Hooded Shrew","icon":"hooded_shrew","description":"A mysterious figure, not fully human, not fully insect, kneels here on the ground.","notes":null,"interactions":[{"item":"blood","itemLabel":"The Blood","itemIcon":"blood","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"(non-set) Trinkets x2","description":"Blood for treasure!"}],"itemIconSource":"missing"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":42.8,"type":"stress","label":"Stress","status":"bad","effect":"+15","description":"The urchin's arcane mutterings stir deep terror within!"},{"chance":28.5,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x1","description":"The shrew seems oblivious to the hero's pilfering."},{"chance":7.6,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"The shrew's filthy grasp is like iron and its nails rake the hero!"},{"chance":14.2,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The supplicant does not seem to notice the hero."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Throbbing Cocoons","icon":"throbbing_cocoons","description":"Shifting and bulging organisms hide behind translucent walls.","notes":"See also Curios#Throbbing Cocoons Variants.","interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-30","description":"Sweet relief as the eggs turn to ash."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"summon","label":"Summon enemies","status":"bad","effect":"Supplicant, Sycophant, and Esquire","description":"Gestating creatures burst forth from the eggs!"},{"chance":12.5,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x3 + 16.7% The Blood","description":"Valuables found beneath the eggs!"},{"chance":12.5,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Disgusting viscera... and not much else."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Thronging Hive","icon":"thronging_hive","description":"The hive is twisted and unnatural - the work of cursed vermin.","notes":null,"interactions":[{"item":"torch","itemLabel":"Torch","itemIcon":"provisions/Torch","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x3 + 16.7% Blood","description":"The vermin sizzle and pop as the hive burns to ash."}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":75.0,"type":"loot","label":"Loot","status":"good","effect":"Any Loot x2 + 20% Blood","description":"The hive holds valuables!"},{"chance":25.0,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"The hive's inhabitants sting and bite the hero's exposed flesh!"}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Wine Crate","icon":"wine_crate","description":"You can see that some of the bottles are still intact.","notes":null,"interactions":[{"item":"shovel","itemLabel":"Shovel","itemIcon":"provisions/Shovel","results":[{"chance":100.0,"type":"firewood","label":"Firewood","status":"good","effect":"Firewood","description":"Smashing the bottles reveals treasure!"}],"itemIconSource":"companion"},{"item":"antivenom","itemLabel":"Antivenom","itemIcon":"provisions/Antivenom","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-30","description":"A pleasant vintage!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":41.7,"type":"loot","label":"Loot","status":"good","effect":"The Blood (33.3%) x2 + Any Loot x1 + Gold/Supplies x4","description":"There is loot in the broken glass!"},{"chance":16.7,"type":"crimson_curse","label":"Crimson Curse","status":"bad","effect":null,"description":"What terrible fortune!"},{"chance":16.7,"type":"negative_quirk","label":"Negative quirk","status":"bad","effect":"Tippler","description":"A sip uncorks a disturbing new habit!"},{"chance":8.3,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"You find a map in an empty bottle!"},{"chance":8.3,"type":"bleed","label":"Bleed","status":"bad","effect":null,"description":"Take more care sorting through broken glass!"},{"chance":8.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"Nothing but broken glass and wood splinters."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Wizened Shrew","icon":"wizened_shrew","description":"This appears to be an elderly but shunned member of this damned court.","notes":null,"interactions":[{"item":"blood","itemLabel":"The Blood","itemIcon":"blood","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"(non-set) Trinkets x3","description":"From a hidden fold, the shrew offers up a rare treasure!"}],"itemIconSource":"missing"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":33.3,"type":"scouting","label":"Scouting","status":"good","effect":null,"description":"A greasy vellum is proffered to the hero."},{"chance":16.7,"type":"disease_random","label":"Random disease","status":"bad","effect":null,"description":"The shrew's filthy grasp is like iron and its nails rake the hero!"},{"chance":33.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The shrew performs a strange ritual, but the results seem positive!"},{"chance":16.7,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":"The supplicant is incoherent and penniless. Harmless."}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Winemaker's Reserve","icon":"winemakers_reserve","description":"Bottles of The Blood disguised as wine.","notes":"Only appears during Gather the Blood expeditions.","interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"blood","label":"The Blood","status":"good","effect":"The Blood x3-5","description":"The object of your search!"}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Lost Treasure Box","icon":"lost_treasure_box","description":"This chest must hold some kind of loot.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Heirlooms x2 + Any Loot x1","description":"You are certain to put this to good use!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Any loot x1 + (non-set) Trinket x2 + Gems x1","description":"You are certain to put this to good use!"}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Trinket Chest","icon":"trinket_chest","description":null,"notes":"Only appears during the main Courtyard campaign expeditions.","interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Heirlooms x2 + Any Loot x1","description":""}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Set Trinket x1","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"}],"farmstead":[{"name":"Corrupted Harvest","icon":"corrupted_harvest","description":"Take up the axe. Blow off some steam.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-60 (Party)","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Fresh Harvest","icon":"fresh_harvest","description":"Tantalizing provisions to renew a body.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"heal","label":"Heal","status":"good","effect":"90% of MAX HP","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Gleaming Shards","icon":"gleaming_shards","description":"Glittering crystals spill onto the ground.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"shards","label":"Comet Shards","status":"good","effect":"Comet Shards x5 to 15","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Miller's Hearth","icon":"millers_hearth","description":"The fireplace is slowly coming apart but looks functional.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"firewood","label":"Firewood","status":"good","effect":"Camp","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Plentiful Bounty","icon":"plentiful_bounty","description":"Tantalizing provisions to renew our energies.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"heal","label":"Heal","status":"good","effect":"65% of MAX HP (Party)","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Rotted Fare","icon":"rotted_fare","description":"Take up the hatchet. Blow off some steam.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"reduce_stress","label":"Stress relief","status":"good","effect":"-100","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Stockpile","icon":"stockpile","description":"Useful supplies for this harrowing journey.","notes":null,"interactions":[{"item":"skeleton_key","itemLabel":"Skeleton Key","itemIcon":"provisions/Skeleton_Key","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Food x6-12 + Any Supplies + Trinket","description":"Opens a hidden compartment!"}],"itemIconSource":"companion"},{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":66.7,"type":"loot","label":"Loot","status":"good","effect":"Laudanum/Medicinal Herbs/Food","description":""},{"chance":33.3,"type":"nothing","label":"Nothing","status":"neutral","effect":null,"description":""}],"itemIconSource":"companion"}],"iconSource":"missing"},{"name":"Mildred","icon":"mildred","description":"This anguished creature does not seem hostile, yet.","notes":null,"interactions":[{"item":"hand","itemLabel":"No item","itemIcon":"byhand","results":[{"chance":100.0,"type":"loot","label":"Loot","status":"good","effect":"Trinket: Mildred's Locket (First encounter only) / Any Trinket/Shards (Subsequent encounters)","description":""}],"itemIconSource":"companion"}],"iconSource":"missing"}]};
+
+// ---------------------------------------------------------------
+// STATE
+// ---------------------------------------------------------------
+let state = {
+  location: 'ruins',
+  length: 'short',
+  tab: 'provisions',
+  curioSort: 'game',
+  curioFilters: new Set(),
+  curioSearch: '',
+  quantities: null,
+};
+
+function loadRecommended(){
+  const base = LOCATIONS[state.location].data[state.length];
+  state.quantities = { ...base };
+}
+loadRecommended();
+
+// ---------------------------------------------------------------
+// RENDER: location picker
+// ---------------------------------------------------------------
+const locationsEl = document.getElementById('locations');
+function renderLocations(){
+  locationsEl.innerHTML = '';
+  Object.entries(LOCATIONS).forEach(([key, loc]) => {
+    const btn = document.createElement('button');
+    btn.className = 'loc-btn' + (key === state.location ? ' active' : '');
+    if (loc.dlc === 'blood') btn.classList.add('dlc-blood');
+    if (loc.dlc === 'madness') btn.classList.add('dlc-madness');
+    btn.innerHTML = `<span class="glyph">${loc.glyph}</span>${loc.label}` +
+      (loc.dlcTag ? `<span class="dlc-tag">${loc.dlcTag}</span>` : '');
+    btn.addEventListener('click', () => {
+      state.location = key;
+      loadRecommended();
+      renderAll();
+    });
+    locationsEl.appendChild(btn);
+  });
+}
+
+// ---------------------------------------------------------------
+// RENDER: tabs
+// ---------------------------------------------------------------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.tab = btn.dataset.tab;
+    renderAll();
+  });
+});
+function renderTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === state.tab);
+  });
+  ['provisions','tips','curios'].forEach(t => {
+    document.getElementById('panel-' + t).classList.toggle('active', t === state.tab);
+  });
+}
+
+// ---------------------------------------------------------------
+// RENDER: length picker (provisions tab)
+// ---------------------------------------------------------------
+const lengthsEl = document.getElementById('lengths');
+const locNoteEl = document.getElementById('locNote');
+function renderLengths(){
+  const loc = LOCATIONS[state.location];
+  const labels = loc.lengthLabels || DEFAULT_LENGTH_LABELS;
+  lengthsEl.innerHTML = '';
+  LENGTHS.forEach(len => {
+    const btn = document.createElement('button');
+    btn.className = 'len-btn' + (len === state.length ? ' active' : '');
+    btn.textContent = labels[len];
+    btn.addEventListener('click', () => {
+      state.length = len;
+      loadRecommended();
+      renderAll();
+    });
+    lengthsEl.appendChild(btn);
+  });
+  locNoteEl.textContent = loc.note || '';
+  locNoteEl.style.display = loc.note ? 'block' : 'none';
+}
+
+// ---------------------------------------------------------------
+// RENDER: ledger (provisions tab)
+// ---------------------------------------------------------------
+const ledgerEl = document.getElementById('ledger');
+function renderLedger(){
+  ledgerEl.innerHTML = '';
+  let total = 0;
+
+  const gridEl = document.createElement('div');
+  gridEl.className = 'ledger-grid';
+
+  Object.keys(PROVISIONS).forEach(id => {
+    const prov = PROVISIONS[id];
+    const qty = state.quantities[id] || 0;
+    const subCost = qty * prov.cost;
+    total += subCost;
+
+    const row = document.createElement('div');
+    row.className = 'ledger-row';
+    row.innerHTML = `
+      ${iconImgOrFallback(prov.icon, prov.label, 'item-glyph-img', 'item-glyph-fallback')}
+      <span class="item-label">
+        <span class="name">${prov.label}</span>
+        <span class="cost">${prov.cost}g · stack ${prov.stack}</span>
+      </span>
+      <span class="stepper">
+        <button data-action="dec" data-id="${id}" aria-label="Decrease ${prov.label}">–</button>
+        <span class="qty">${qty}</span>
+        <button data-action="inc" data-id="${id}" aria-label="Increase ${prov.label}">+</button>
+      </span>
+      <span class="subcost">${subCost.toLocaleString()}g</span>
+    `;
+    gridEl.appendChild(row);
+  });
+  ledgerEl.appendChild(gridEl);
+
+  const totalsRow = document.createElement('div');
+  totalsRow.className = 'totals';
+  totalsRow.innerHTML = `<span class="label">Total cost</span><span class="amount">${total.toLocaleString()} gold</span>`;
+  ledgerEl.appendChild(totalsRow);
+
+  ledgerEl.querySelectorAll('.stepper button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const delta = btn.dataset.action === 'inc' ? 1 : -1;
+      state.quantities[id] = Math.max(0, (state.quantities[id] || 0) + delta);
+      renderLedger();
+    });
+  });
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  loadRecommended();
+  renderLedger();
+});
+
+// ---------------------------------------------------------------
+// RENDER: tips tab
+// ---------------------------------------------------------------
+const tipsGridEl = document.getElementById('tipsGrid');
+function renderTips(){
+  tipsGridEl.innerHTML = '';
+  const tips = TIPS_DATA[state.location];
+  if (!tips) return;
+  const sections = [
+    { key:'effective', title:'Effective', cls:'effective' },
+    { key:'ineffective', title:'Ineffective', cls:'ineffective' },
+    { key:'dangers', title:'Watch out for', cls:'dangers' },
+  ];
+  sections.forEach(sec => {
+    const items = tips[sec.key] || [];
+    const card = document.createElement('div');
+    card.className = 'tips-card ' + sec.cls;
+    let inner = `<h3>${sec.title}</h3>`;
+    if (items.length === 0) {
+      inner += `<div class="tips-empty">Nothing notable.</div>`;
+    } else {
+      items.forEach(it => {
+        inner += `<div class="tips-item"><span class="t-label">${it.label}</span><span class="t-details">${it.details}</span></div>`;
+      });
+    }
+    card.innerHTML = inner;
+    tipsGridEl.appendChild(card);
+  });
+}
+
+// ---------------------------------------------------------------
+// RENDER: curios tab
+// ---------------------------------------------------------------
+const curiosListEl = document.getElementById('curiosList');
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.curioSort = btn.dataset.sort;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderCurios();
+  });
+});
+function iconImgOrFallback(src, alt, cls, fallbackCls){
+  const letter = (alt || '?').trim().charAt(0).toUpperCase();
+  return `<img class="${cls}" src="icons/${src}.png" alt="${alt}" loading="lazy"
+    onerror="this.outerHTML='&lt;span class=&quot;${fallbackCls}&quot;&gt;${letter}&lt;/span&gt;'">`;
+}
+
+// Result type -> tag lozenge. torch (the item you find) stays under Loot;
+// torchlight/decrease_light (light-meter shifts) are their own neutral Torch tag.
+const TAG_MAP = {
+  loot:'Loot', heirloom:'Loot', blood:'Loot', firewood:'Loot', torch:'Loot',
+  grain_sack:'Loot', shards:'Loot', holy_relic:'Loot', medicine:'Loot',
+  ancestors_relic:'Loot', quest_activate:'Loot',
+  scouting:'Scouting', journal:'Scouting',
+  positive_quirk:'Quirk (+)', positive_quirk_random:'Quirk (+)', remove_negative_quirk:'Quirk (+)',
+  buff:'Buff', heal:'Buff',
+  reduce_stress:'Stress Relief',
+  torchlight:'Torch', decrease_light:'Torch',
+  stress:'Stress',
+  negative_quirk:'Quirk (–)', negative_quirk_random:'Quirk (–)',
+  bleed:'DOT', blight:'DOT',
+  disease:'Disease', disease_random:'Disease',
+  summon:'Fight',
+  debuff:'Debuff',
+  crimson_curse:'Crimson Curse',
+};
+const TAG_STATUS = {
+  'Loot':'good', 'Scouting':'good', 'Quirk (+)':'good', 'Buff':'good', 'Stress Relief':'good',
+  'Torch':'neutral',
+  'Stress':'bad', 'Quirk (–)':'bad', 'DOT':'bad', 'Disease':'bad', 'Fight':'bad',
+  'Debuff':'bad', 'Crimson Curse':'bad',
+};
+const TAG_ORDER = ['Loot','Scouting','Quirk (+)','Buff','Stress Relief','Torch','Stress','Quirk (–)','DOT','Disease','Fight','Debuff','Crimson Curse'];
+
+function getCurioTags(curio){
+  const found = new Set();
+  curio.interactions.forEach(inter => {
+    inter.results.forEach(r => {
+      const tag = TAG_MAP[r.type];
+      if (tag) found.add(tag);
+    });
+  });
+  return TAG_ORDER.filter(t => found.has(t));
+}
+
+// ---------------------------------------------------------------
+// Curio tag filter chips
+// ---------------------------------------------------------------
+const filterTagsEl = document.getElementById('filterTags');
+const filterCountEl = document.getElementById('filterCount');
+document.getElementById('filterToggle').addEventListener('click', () => {
+  const row = document.getElementById('filterRow');
+  const nowOpen = !row.classList.contains('open');
+  row.classList.toggle('open', nowOpen);
+  document.getElementById('filterToggle').setAttribute('aria-expanded', String(nowOpen));
+});
+function updateFilterCount(){
+  const n = state.curioFilters.size;
+  filterCountEl.textContent = n > 0 ? `(${n})` : '';
+}
+function renderFilterChips(){
+  filterTagsEl.innerHTML = '';
+  TAG_ORDER.forEach(tag => {
+    const chip = document.createElement('button');
+    chip.className = `filter-chip status-${TAG_STATUS[tag]}` + (state.curioFilters.has(tag) ? ' active' : '');
+    chip.textContent = tag;
+    chip.addEventListener('click', () => {
+      if (state.curioFilters.has(tag)) {
+        state.curioFilters.delete(tag);
+      } else {
+        state.curioFilters.add(tag);
+      }
+      renderFilterChips();
+      updateFilterCount();
+      renderCurios();
+    });
+    filterTagsEl.appendChild(chip);
+  });
+  updateFilterCount();
+}
+document.getElementById('filterClear').addEventListener('click', () => {
+  state.curioFilters.clear();
+  renderFilterChips();
+  updateFilterCount();
+  renderCurios();
+});
+renderFilterChips();
+
+document.getElementById('curioSearch').addEventListener('input', (e) => {
+  state.curioSearch = e.target.value.trim().toLowerCase();
+  renderCurios();
+});
+
+function renderCurios(){
+  curiosListEl.innerHTML = '';
+  let curios = CURIOS_DATA[state.location] || [];
+  if (state.curioSort === 'alpha') {
+    curios = [...curios].sort((a, b) => a.name.localeCompare(b.name));
+  }
+  if (state.curioFilters.size > 0) {
+    curios = curios.filter(c => getCurioTags(c).some(t => state.curioFilters.has(t)));
+  }
+  if (state.curioSearch) {
+    const q = state.curioSearch;
+    curios = curios.filter(c => {
+      if (c.name.toLowerCase().includes(q)) return true;
+      return getCurioTags(c).some(t => t.toLowerCase().includes(q));
+    });
+  }
+  if (curios.length === 0) {
+    curiosListEl.innerHTML = `<div class="filter-empty">No curios here match your search/filters.</div>`;
+    return;
+  }
+  curios.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'curio-card';
+
+    let head = `<div class="curio-head">`;
+    head += iconImgOrFallback(c.icon, c.name, 'curio-icon', 'curio-icon-fallback');
+    head += `<div class="curio-title"><div class="name">${c.name}</div>`;
+    if (c.description) head += `<div class="desc">${c.description}</div>`;
+    head += `</div>`;
+
+    const tags = getCurioTags(c);
+    if (tags.length) {
+      head += `<div class="curio-tags"><div class="tag-row">`;
+      tags.forEach(t => {
+        head += `<span class="tag-lozenge status-${TAG_STATUS[t]}">${t}</span>`;
+      });
+      head += `</div></div>`;
+    }
+    head += `</div>`;
+
+    let table = `<table class="interactions-table"><thead><tr><th>Item</th><th>Outcome</th></tr></thead><tbody>`;
+    const sorted = [...c.interactions].sort((a,b) => (a.item === 'hand' ? -1 : b.item === 'hand' ? 1 : 0));
+    sorted.forEach(inter => {
+      const itemIconHtml = iconImgOrFallback(inter.itemIcon, inter.itemLabel, '', 'item-fallback');
+      let outcomes = '';
+      inter.results.forEach(r => {
+        outcomes += `<div class="outcome-line">
+          <span class="outcome-chance">${r.chance}%</span>
+          <span><span class="outcome-label status-${r.status}">${r.label}</span>` +
+          (r.effect ? ` <span class="outcome-effect">— ${r.effect}</span>` : '') +
+          `</span></div>`;
+      });
+      table += `<tr>
+        <td><div class="item-cell">${itemIconHtml}<span>${inter.itemLabel}</span></div></td>
+        <td>${outcomes}</td>
+      </tr>`;
+    });
+    table += `</tbody></table>`;
+
+    let notes = c.notes ? `<div class="curio-notes">${c.notes}</div>` : '';
+
+    card.innerHTML = head + table + notes;
+    curiosListEl.appendChild(card);
+  });
+}
+
+function renderAll(){
+  renderLocations();
+  renderTabs();
+  renderLengths();
+  renderLedger();
+  renderTips();
+  renderCurios();
+}
+renderAll();
+</script>
+</body>
+</html>

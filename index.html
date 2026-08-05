@@ -55,10 +55,12 @@
   }
 
   .flame{
-    font-size:1.6rem;
-    display:inline-block;
     filter: drop-shadow(0 0 8px rgba(232,188,99,0.55));
-    animation: flicker 3.2s infinite ease-in-out;
+    width: 60%;
+    height: 60%;
+    flex-shrink:0;
+  /*  object-fit:contain; */
+  /*   animation: flicker 3.2s infinite ease-in-out; */
   }
   @keyframes flicker{
     0%,100%{ transform: scale(1) rotate(0deg); opacity:1; }
@@ -674,7 +676,7 @@
 <body>
 <div class="wrap">
   <header>
-    <span class="flame">🔥</span>
+    <span class="flame"><img src="/darkest/icons/torch.png" class="flame" /></span>
     <h1>Darkest Companion+++</h1>
     <p class="attribution">
       An expansion of <a href="https://arnaud.rocks/darkest-companion/" target="_blank" rel="noopener">Arnaud Rinquin's Darkest Companion</a>

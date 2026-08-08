@@ -56,13 +56,17 @@
     --flame-outer: #a4200f;
     --flame-mid: #e8621f;
     --flame-inner: #f7c948;
-    /* Nudge these if the flame doesn't line up with your torch.png's bowl: */
-    --flame-width: 46%;
-    --flame-top: 2%;
+    /* torch.png is a 900x188 horizontal divider with a small torch emblem
+       dead-center. Nudge these if the flame drifts off the cage: */
+    --flame-width: 9%;
+    --flame-bottom: 50%;
     position:relative;
-    display:inline-block;
-    width:64px;
-    height:90px;
+    display:block;
+    width:100%;
+    max-width:520px;
+    margin:0 auto;
+    aspect-ratio:900 / 188;
+    overflow:visible;
   }
   .torch-base{
     display:block;
@@ -72,13 +76,13 @@
   }
   .flame-svg{
     position:absolute;
-    top:var(--flame-top);
+    bottom:var(--flame-bottom);
     left:50%;
     width:var(--flame-width);
     height:auto;
     transform:translateX(-50%);
     overflow:visible;
-    filter: drop-shadow(0 0 10px rgba(232,98,31,0.45)) drop-shadow(0 0 18px rgba(164,32,15,0.3));
+    filter: drop-shadow(0 0 6px rgba(232,98,31,0.5)) drop-shadow(0 0 12px rgba(164,32,15,0.3));
   }
 
   .flame-outer, .flame-mid, .flame-inner{

@@ -52,18 +52,64 @@
     position:relative;
   }
   
-  .flame {
-    filter: drop-shadow(0 0 8px rgba(232,188,99,0.55));
-    width: 60%;
-    height: 60%;
-    flex-shrink:0;
-  /*  object-fit:contain; */
-  /*   animation: flicker 3.2s infinite ease-in-out; */
+  .torch{
+    --flame-outer: #a4200f;
+    --flame-mid: #e8621f;
+    --flame-inner: #f7c948;
+    /* Nudge these if the flame doesn't line up with your torch.png's bowl: */
+    --flame-width: 46%;
+    --flame-top: 2%;
+    position:relative;
+    display:inline-block;
+    width:64px;
+    height:90px;
   }
-  @keyframes flicker{
-    0%,100%{ transform: scale(1) rotate(0deg); opacity:1; }
-    35%{ transform: scale(1.06,0.94) rotate(-2deg); opacity:0.9; }
-    60%{ transform: scale(0.95,1.05) rotate(2deg); opacity:1; }
+  .torch-base{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+  .flame-svg{
+    position:absolute;
+    top:var(--flame-top);
+    left:50%;
+    width:var(--flame-width);
+    height:auto;
+    transform:translateX(-50%);
+    overflow:visible;
+    filter: drop-shadow(0 0 10px rgba(232,98,31,0.45)) drop-shadow(0 0 18px rgba(164,32,15,0.3));
+  }
+
+  .flame-outer, .flame-mid, .flame-inner{
+    transform-origin:50% 84%;
+    animation-iteration-count:infinite;
+    animation-timing-function:ease-in-out;
+  }
+  .flame-outer{ animation-name:flicker-outer; animation-duration:2.6s; }
+  .flame-mid{ animation-name:flicker-mid; animation-duration:1.9s; animation-delay:-0.4s; }
+  .flame-inner{ animation-name:flicker-inner; animation-duration:1.3s; animation-delay:-0.8s; }
+
+  @keyframes flicker-outer{
+    0%,100%{ transform: scale(1,1) skewX(0deg); opacity:0.92; }
+    30%{ transform: scale(0.94,1.05) skewX(-2deg); opacity:1; }
+    55%{ transform: scale(1.05,0.96) skewX(1.5deg); opacity:0.85; }
+    80%{ transform: scale(0.97,1.02) skewX(-1deg); opacity:0.96; }
+  }
+  @keyframes flicker-mid{
+    0%,100%{ transform: scale(1,1) skewX(0deg); opacity:0.95; }
+    25%{ transform: scale(1.06,0.95) skewX(2deg); opacity:1; }
+    50%{ transform: scale(0.92,1.06) skewX(-1.5deg); opacity:0.88; }
+    75%{ transform: scale(1.03,0.97) skewX(1deg); opacity:1; }
+  }
+  @keyframes flicker-inner{
+    0%,100%{ transform: scale(1,1); opacity:1; }
+    40%{ transform: scale(1.08,0.92); opacity:0.9; }
+    70%{ transform: scale(0.93,1.07); opacity:1; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .flame-outer, .flame-mid, .flame-inner{ animation:none; }
   }
 
   h1{
@@ -666,9 +712,6 @@
   .tab-panel{ display:none; }
   .tab-panel.active{ display:block; }
 
-  @media (prefers-reduced-motion: reduce){
-    .flame{ animation:none; }
-  }
   /* Trinkets */
   .trinket-grid{
     display:grid;
@@ -829,7 +872,32 @@
 <body>
 <div class="wrap">
   <header>
-    <span class="flame"><img src="/darkest/icons/torch.png" alt="WE ARE THE FLAME." class="flame"/></span>
+    <div class="torch" role="img" aria-label="A flickering torch">
+      <img class="torch-base" src="/darkest/icons/torch.png" alt="">
+      <svg class="flame-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <g class="flame-outer">
+          <path d="M50 8
+                   C 36 26, 27 42, 29 60
+                   C 30 74, 40 84, 50 84
+                   C 60 84, 70 74, 71 60
+                   C 73 42, 64 26, 50 8 Z" fill="var(--flame-outer)"/>
+        </g>
+        <g class="flame-mid">
+          <path d="M50 24
+                   C 41 38, 35 50, 37 62
+                   C 38 72, 44 78, 50 78
+                   C 56 78, 62 72, 63 62
+                   C 65 50, 59 38, 50 24 Z" fill="var(--flame-mid)"/>
+        </g>
+        <g class="flame-inner">
+          <path d="M50 40
+                   C 44 50, 41 57, 42 65
+                   C 43 71, 46 75, 50 75
+                   C 54 75, 57 71, 58 65
+                   C 59 57, 56 50, 50 40 Z" fill="var(--flame-inner)"/>
+        </g>
+      </svg>
+    </div>
     <h1>Darkest Companion++</h1>
     <p class="attribution">
       An expansion of <a href="https://arnaud.rocks/darkest-companion/" target="_blank" rel="noopener">Arnaud Rinquin's Darkest Companion</a>

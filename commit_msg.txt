@@ -1,1 +1,0 @@
-Moved trinkets to own section, do not show Backer trinkets by default.

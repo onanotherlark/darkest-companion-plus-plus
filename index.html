@@ -781,6 +781,49 @@
     color:var(--parchment-dim);
   }
 
+  /* Top-level section nav (Expedition Planning vs Trinkets) */
+  .section-nav{
+    display:flex;
+    gap:0.6rem;
+    margin:0 0 1.75rem;
+  }
+  .section-nav-btn{
+    flex:1;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--parchment-dim);
+    padding:0.75rem 0.5rem;
+    font-family:'Cinzel Decorative', serif;
+    font-size:0.95rem;
+    letter-spacing:0.03em;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .section-nav-btn:hover{ border-color:var(--gold); color:var(--parchment); }
+  .section-nav-btn.active{
+    color:var(--ink);
+    background:var(--gold);
+    border-color:var(--gold-bright);
+  }
+  .section-panel{ display:none; }
+  .section-panel.active{ display:block; }
+
+  .backer-toggle-row{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    margin-top:1rem;
+    font-size:0.88rem;
+    color:var(--parchment-dim);
+    cursor:pointer;
+  }
+  .backer-toggle-row input{
+    accent-color:var(--gold-bright);
+    width:1rem;
+    height:1rem;
+  }
+
 </style>
 </head>
 <body>
@@ -795,60 +838,66 @@
     </p>
   </header>
 
-  <div class="divider" id="locationDivider"><span>Choose your expedition</span></div>
-  <div class="locations" id="locations"></div>
-
-  <div class="tabs" id="tabs">
-    <button class="tab-btn active" data-tab="provisions">Provisions</button>
-    <button class="tab-btn" data-tab="tips">Tips</button>
-    <button class="tab-btn" data-tab="curios">Curios</button>
-    <button class="tab-btn" data-tab="trinkets">Trinkets</button>
+  <div class="section-nav" id="sectionNav">
+    <button class="section-nav-btn active" data-section="expedition">Expedition Planning</button>
+    <button class="section-nav-btn" data-section="trinkets">Trinkets</button>
   </div>
 
-  <!-- PROVISIONS TAB -->
-  <div class="tab-panel active" id="panel-provisions">
-    <div class="divider"><span>Length</span></div>
-    <div class="lengths" id="lengths"></div>
-    <p class="note" id="locNote"></p>
+  <div class="section-panel active" id="section-expedition">
+    <div class="divider" id="locationDivider"><span>Choose your expedition</span></div>
+    <div class="locations" id="locations"></div>
 
-    <div class="divider"><span>Supply Ledger</span></div>
-    <div class="ledger" id="ledger"></div>
-    <div class="reset-row"><button id="resetBtn">Reset to recommended amounts</button></div>
-  </div>
-
-  <!-- TIPS TAB -->
-  <div class="tab-panel" id="panel-tips">
-    <div class="divider"><span>Field notes</span></div>
-    <div class="tips-grid" id="tipsGrid"></div>
-  </div>
-
-  <!-- CURIOS TAB -->
-  <div class="tab-panel" id="panel-curios">
-    <div class="divider"><span>Curios</span></div>
-    <div class="search-row">
-      <input type="text" id="curioSearch" class="search-input" placeholder="Search curio name or tag…" autocomplete="off">
+    <div class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="provisions">Provisions</button>
+      <button class="tab-btn" data-tab="tips">Tips</button>
+      <button class="tab-btn" data-tab="curios">Curios</button>
     </div>
-    <div class="sort-row">
-      <span class="sort-label">Sort</span>
-      <button class="sort-btn active" data-sort="game">Game order</button>
-      <button class="sort-btn" data-sort="alpha">A–Z</button>
+
+    <!-- PROVISIONS TAB -->
+    <div class="tab-panel active" id="panel-provisions">
+      <div class="divider"><span>Length</span></div>
+      <div class="lengths" id="lengths"></div>
+      <p class="note" id="locNote"></p>
+
+      <div class="divider"><span>Supply Ledger</span></div>
+      <div class="ledger" id="ledger"></div>
+      <div class="reset-row"><button id="resetBtn">Reset to recommended amounts</button></div>
     </div>
-    <div class="filter-row" id="filterRow">
-      <button class="filter-head" id="filterToggle" type="button" aria-expanded="false">
-        <span class="sort-label">Filter by tag<span class="filter-count" id="filterCount"></span></span>
-        <span class="filter-chevron" id="filterChevron">▾</span>
-      </button>
-      <div class="filter-tags-wrap" id="filterTagsWrap">
-        <div class="filter-tags" id="filterTags"></div>
-        <div class="filter-clear-row"><button class="filter-clear" id="filterClear">Clear</button></div>
+
+    <!-- TIPS TAB -->
+    <div class="tab-panel" id="panel-tips">
+      <div class="divider"><span>Field notes</span></div>
+      <div class="tips-grid" id="tipsGrid"></div>
+    </div>
+
+    <!-- CURIOS TAB -->
+    <div class="tab-panel" id="panel-curios">
+      <div class="divider"><span>Curios</span></div>
+      <div class="search-row">
+        <input type="text" id="curioSearch" class="search-input" placeholder="Search curio name or tag…" autocomplete="off">
       </div>
+      <div class="sort-row">
+        <span class="sort-label">Sort</span>
+        <button class="sort-btn active" data-sort="game">Game order</button>
+        <button class="sort-btn" data-sort="alpha">A–Z</button>
+      </div>
+      <div class="filter-row" id="filterRow">
+        <button class="filter-head" id="filterToggle" type="button" aria-expanded="false">
+          <span class="sort-label">Filter by tag<span class="filter-count" id="filterCount"></span></span>
+          <span class="filter-chevron" id="filterChevron">▾</span>
+        </button>
+        <div class="filter-tags-wrap" id="filterTagsWrap">
+          <div class="filter-tags" id="filterTags"></div>
+          <div class="filter-clear-row"><button class="filter-clear" id="filterClear">Clear</button></div>
+        </div>
+      </div>
+      <p class="note">Each curio's first row shows what happens investigating bare-handed; the rows below show what changes if you treat it with an item first.</p>
+      <div id="curiosList"></div>
     </div>
-    <p class="note">Each curio's first row shows what happens investigating bare-handed; the rows below show what changes if you treat it with an item first.</p>
-    <div id="curiosList"></div>
   </div>
 
-  <!-- TRINKETS TAB -->
-  <div class="tab-panel" id="panel-trinkets">
+  <!-- TRINKETS SECTION -->
+  <div class="section-panel" id="section-trinkets">
     <div class="divider"><span>Trinkets</span></div>
     <div class="search-row">
       <input type="text" id="trinketSearch" class="search-input" placeholder="Search trinket name…" autocomplete="off">
@@ -891,6 +940,11 @@
         <div class="filter-clear-row"><button class="filter-clear" id="trinketTagFilterClear">Clear</button></div>
       </div>
     </div>
+
+    <label class="backer-toggle-row">
+      <input type="checkbox" id="showBackersCheckbox">
+      <span>Show Backer trinkets (novelty items named after Kickstarter backers)</span>
+    </label>
 
     <p class="note">Every stat here is pulled directly from the game's own data files (buff definitions cross-referenced against each trinket's actual effect codes), so numbers are exact, not estimated. Sell value shown in gold or Comet Shards, matching each trinket's actual currency.</p>
     <div class="trinket-grid" id="trinketGrid"></div>
@@ -988,6 +1042,7 @@ const CURIOS_DATA = {"ruins":[{"name":"Crate","icon":"crate","description":null,
 // STATE
 // ---------------------------------------------------------------
 let state = {
+  section: 'expedition',
   location: 'ruins',
   length: 'short',
   tab: 'provisions',
@@ -1000,6 +1055,7 @@ let state = {
   trinketClassFilters: new Set(),
   trinketTagFilters: new Set(),
   trinketSearch: '',
+  showBackers: false,
 };
 
 function loadRecommended(){
@@ -1031,6 +1087,24 @@ function renderLocations(){
 }
 
 // ---------------------------------------------------------------
+// RENDER: top-level section nav (Expedition Planning vs Trinkets)
+// ---------------------------------------------------------------
+document.querySelectorAll('.section-nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.section = btn.dataset.section;
+    renderAll();
+  });
+});
+function renderSectionNav(){
+  document.querySelectorAll('.section-nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.section === state.section);
+  });
+  ['expedition','trinkets'].forEach(s => {
+    document.getElementById('section-' + s).classList.toggle('active', s === state.section);
+  });
+}
+
+// ---------------------------------------------------------------
 // RENDER: tabs
 // ---------------------------------------------------------------
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1043,12 +1117,9 @@ function renderTabs(){
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === state.tab);
   });
-  ['provisions','tips','curios','trinkets'].forEach(t => {
+  ['provisions','tips','curios'].forEach(t => {
     document.getElementById('panel-' + t).classList.toggle('active', t === state.tab);
   });
-  const hideLocation = state.tab === 'trinkets';
-  document.getElementById('locationDivider').style.display = hideLocation ? 'none' : '';
-  document.getElementById('locations').style.display = hideLocation ? 'none' : '';
 }
 
 // ---------------------------------------------------------------
@@ -1417,6 +1488,11 @@ function initTrinketFilters(){
     renderTrinkets();
   });
 
+  document.getElementById('showBackersCheckbox').addEventListener('change', (e) => {
+    state.showBackers = e.target.checked;
+    renderTrinkets();
+  });
+
   renderTrinketSortToggle();
 }
 initTrinketFilters();
@@ -1424,6 +1500,9 @@ initTrinketFilters();
 function renderTrinkets(){
   let items = TRINKETS_DATA.slice();
 
+  if (!state.showBackers) {
+    items = items.filter(t => t.rarity !== 'kickstarter');
+  }
   if (state.trinketRarityFilters.size > 0) {
     items = items.filter(t => state.trinketRarityFilters.has(t.rarity));
   }
@@ -1486,6 +1565,7 @@ function renderTrinkets(){
 }
 
 function renderAll(){
+  renderSectionNav();
   renderLocations();
   renderTabs();
   renderLengths();
